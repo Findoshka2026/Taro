@@ -32,6 +32,12 @@
     "plugins": [
       "expo-font",
       "expo-asset"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "b84f1fe8-3532-46f1-8b62-012fde818b92"
+      }
+    },
+    "owner": "findoshka2k26"
   }
 }
