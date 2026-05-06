@@ -15,7 +15,6 @@ const DEFAULT_STATE: PersistedState = {
   language: 'ru',
   hapticsEnabled: true,
   soundsEnabled: false,
-  groqApiKey: null,
   customTasks: [],
   history: [],
   streak: {
@@ -52,7 +51,6 @@ interface Actions {
   setLanguage: (lang: Language) => void;
   setHaptics: (enabled: boolean) => void;
   setSounds: (enabled: boolean) => void;
-  setGroqKey: (key: string | null) => void;
   /** Initialise today's three cards if a new day has begun. */
   rollDailyDraw: () => void;
   /** User taps one of the three cards. */
@@ -79,7 +77,6 @@ const persistKeys: (keyof PersistedState)[] = [
   'language',
   'hapticsEnabled',
   'soundsEnabled',
-  'groqApiKey',
   'customTasks',
   'history',
   'streak',
@@ -132,10 +129,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   setSounds: (enabled) => {
     set({ soundsEnabled: enabled });
-    persist(get());
-  },
-  setGroqKey: (key) => {
-    set({ groqApiKey: key });
     persist(get());
   },
 

@@ -1,15 +1,7 @@
-import React, { useState } from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import React from 'react';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { ModalSheet } from '../components/ModalSheet';
-import { PrimaryButton } from '../components/PrimaryButton';
 import { useAppStore } from '../state/store';
 import { SUPPORTED_LANGUAGES, t as tFor } from '../i18n';
 import { colors } from '../theme/colors';
@@ -21,14 +13,11 @@ export const SettingsModal: React.FC = () => {
   const setModal = useAppStore((s) => s.setModal);
   const hapticsEnabled = useAppStore((s) => s.hapticsEnabled);
   const soundsEnabled = useAppStore((s) => s.soundsEnabled);
-  const groqApiKey = useAppStore((s) => s.groqApiKey);
   const setLanguage = useAppStore((s) => s.setLanguage);
   const setHaptics = useAppStore((s) => s.setHaptics);
   const setSounds = useAppStore((s) => s.setSounds);
-  const setGroqKey = useAppStore((s) => s.setGroqKey);
 
   const t = tFor(language);
-  const [keyDraft, setKeyDraft] = useState(groqApiKey ?? '');
 
   return (
     <ModalSheet
@@ -86,25 +75,6 @@ export const SettingsModal: React.FC = () => {
 
       <Text style={styles.section}>{t.settings.aiSection}</Text>
       <Text style={styles.hint}>{t.settings.aiHint}</Text>
-      <TextInput
-        placeholder="gsk_..."
-        placeholderTextColor={colors.mist}
-        value={keyDraft}
-        onChangeText={setKeyDraft}
-        autoCapitalize="none"
-        autoCorrect={false}
-        secureTextEntry
-        style={styles.input}
-      />
-      <View style={styles.btnRow}>
-        <PrimaryButton
-          label={t.buttons.save}
-          onPress={() => {
-            setGroqKey(keyDraft.trim() || null);
-            setModal(null);
-          }}
-        />
-      </View>
     </ModalSheet>
   );
 };
@@ -158,19 +128,5 @@ const styles = StyleSheet.create({
   rowLabel: {
     ...typography.body,
     color: colors.cream,
-  },
-  input: {
-    ...typography.body,
-    color: colors.cream,
-    backgroundColor: 'rgba(244, 229, 194, 0.06)',
-    borderWidth: 0.5,
-    borderColor: 'rgba(212, 162, 76, 0.4)',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 12,
-  },
-  btnRow: {
-    alignItems: 'flex-end',
   },
 });

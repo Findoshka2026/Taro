@@ -6,7 +6,6 @@ export interface PersistedState {
   language: 'ru' | 'en';
   hapticsEnabled: boolean;
   soundsEnabled: boolean;
-  groqApiKey: string | null;
   customTasks: import('../data/taskBank').TaskTemplate[];
   history: HistoryEntry[];
   streak: {

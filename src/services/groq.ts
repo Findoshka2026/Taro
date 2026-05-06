@@ -1,7 +1,10 @@
 import type { TaskCategory } from '../i18n/types';
 import type { CardArtId, TaskTemplate } from '../data/taskBank';
 
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const PROXY_URL =
+  'https://taro-proxy.findoshka2k26.workers.dev/v1/chat/completions';
+const APP_TOKEN = 'Mb2JmylDfDNs2thxd8xqDKN5lGm0FEvnimAYiC20400';
+const MODEL = 'llama-3.3-70b-versatile';
 
 const ALLOWED_CATEGORIES: TaskCategory[] = [
   'creative',
@@ -79,19 +82,18 @@ interface GeneratedTask {
 }
 
 export const generateTaskWithGroq = async (
-  apiKey: string,
   language: 'ru' | 'en',
 ): Promise<TaskTemplate> => {
   const prompt = buildPrompt(language);
 
-  const response = await fetch(GROQ_URL, {
+  const response = await fetch(PROXY_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      'X-App-Token': APP_TOKEN,
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+      model: MODEL,
       temperature: 0.85,
       max_tokens: 400,
       response_format: { type: 'json_object' },
@@ -108,15 +110,15 @@ export const generateTaskWithGroq = async (
 
   if (!response.ok) {
     const errText = await response.text().catch(() => '');
-    throw new Error(`Groq API ${response.status}: ${errText.slice(0, 120)}`);
+    throw new Error(`Proxy ${response.status}: ${errText.slice(0, 120)}`);
   }
 
   const data = await response.json();
   const content: string | undefined = data?.choices?.[0]?.message?.content;
-  if (!content) throw new Error('Empty response from Groq');
+  if (!content) throw new Error('Empty response from proxy');
 
   const parsed = parseJsonLoose<GeneratedTask>(content);
-  if (!parsed) throw new Error('Could not parse JSON from Groq response');
+  if (!parsed) throw new Error('Could not parse JSON from response');
   validate(parsed);
 
   const id = `ai-${Date.now()}`;

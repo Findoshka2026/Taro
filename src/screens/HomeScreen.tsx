@@ -39,8 +39,6 @@ const BIG_CARD_H = Math.round(BIG_CARD_W * 1.55);
 const REST_CARD_W = Math.min(170, Math.floor(SCREEN_W * 0.42));
 const REST_CARD_H = Math.round(REST_CARD_W * 1.55);
 
-const DEFAULT_GROQ_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY ?? '';
-
 export const HomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
 
@@ -51,7 +49,6 @@ export const HomeScreen: React.FC = () => {
   const hapticsEnabled = useAppStore((s) => s.hapticsEnabled);
   const isGenerating = useAppStore((s) => s.isGenerating);
   const errorMessage = useAppStore((s) => s.errorMessage);
-  const groqApiKey = useAppStore((s) => s.groqApiKey);
 
   const selectCard = useAppStore((s) => s.selectCard);
   const finishReveal = useAppStore((s) => s.finishReveal);
@@ -155,15 +152,9 @@ export const HomeScreen: React.FC = () => {
 
   const onGenerateAi = useCallback(async () => {
     setError(null);
-    const key = groqApiKey ?? DEFAULT_GROQ_KEY;
-    if (!key) {
-      setModal('settings');
-      setError(t.settings.aiHint);
-      return;
-    }
     setGenerating(true);
     try {
-      const tmp = await generateTaskWithGroq(key, language);
+      const tmp = await generateTaskWithGroq(language);
       applyOverride({
         templateId: tmp.id,
         title: tmp.title[language],
@@ -177,7 +168,7 @@ export const HomeScreen: React.FC = () => {
     } finally {
       setGenerating(false);
     }
-  }, [groqApiKey, language, t, setGenerating, setError, applyOverride, setModal]);
+  }, [language, t, setGenerating, setError, applyOverride]);
 
   return (
     <ScrollView
