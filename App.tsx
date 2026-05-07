@@ -12,6 +12,7 @@ import { StreakModal } from './src/screens/StreakModal';
 import { HistoryModal } from './src/screens/HistoryModal';
 import { AddTaskModal } from './src/screens/AddTaskModal';
 import { SettingsModal } from './src/screens/SettingsModal';
+import { initSounds, releaseSounds } from './src/services/sound';
 import { useAppStore } from './src/state/store';
 import { colors } from './src/theme/colors';
 
@@ -21,6 +22,10 @@ export default function App() {
 
   useEffect(() => {
     void hydrate();
+    void initSounds();
+    return () => {
+      releaseSounds();
+    };
   }, [hydrate]);
 
   return (

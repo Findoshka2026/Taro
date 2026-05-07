@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { playSound } from '../services/sound';
 import { useAppStore } from '../state/store';
 import { colors } from '../theme/colors';
 import { text as typography } from '../theme/typography';
@@ -35,11 +36,15 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   style,
 }) => {
   const hapticsEnabled = useAppStore((s) => s.hapticsEnabled);
+  const soundsEnabled = useAppStore((s) => s.soundsEnabled);
 
   const handlePress = () => {
     if (disabled || loading) return;
     if (hapticsEnabled) {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    if (soundsEnabled) {
+      playSound('cardTap');
     }
     onPress();
   };

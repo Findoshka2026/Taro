@@ -22,6 +22,7 @@ import { PrimaryButton } from '../components/PrimaryButton';
 import { IconButton } from '../components/IconButton';
 import { RestingDeck } from '../components/RestingDeck';
 import { generateTaskWithGroq } from '../services/groq';
+import { playSound } from '../services/sound';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -47,6 +48,7 @@ export const HomeScreen: React.FC = () => {
   const today = useAppStore((s) => s.today);
   const customTasks = useAppStore((s) => s.customTasks);
   const hapticsEnabled = useAppStore((s) => s.hapticsEnabled);
+  const soundsEnabled = useAppStore((s) => s.soundsEnabled);
   const isGenerating = useAppStore((s) => s.isGenerating);
   const errorMessage = useAppStore((s) => s.errorMessage);
 
@@ -104,9 +106,15 @@ export const HomeScreen: React.FC = () => {
       if (hapticsEnabled) {
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
+      if (soundsEnabled) {
+        playSound('cardTap');
+        setTimeout(() => {
+          if (useAppStore.getState().soundsEnabled) playSound('burn');
+        }, 180);
+      }
       selectCard(i);
     },
-    [phase, hapticsEnabled, selectCard],
+    [phase, hapticsEnabled, soundsEnabled, selectCard],
   );
 
   // Drive the burning → revealing → active sequence.
@@ -116,6 +124,9 @@ export const HomeScreen: React.FC = () => {
         if (hapticsEnabled) {
           void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
+        if (soundsEnabled) {
+          playSound('flip');
+        }
         setRevealAnim(true);
       }, 950);
       return () => clearTimeout(tm);
@@ -124,7 +135,7 @@ export const HomeScreen: React.FC = () => {
       setRevealAnim(false);
     }
     return undefined;
-  }, [phase, hapticsEnabled]);
+  }, [phase, hapticsEnabled, soundsEnabled]);
 
   const onFlipDone = useCallback(() => {
     finishReveal();
@@ -134,8 +145,11 @@ export const HomeScreen: React.FC = () => {
     if (hapticsEnabled) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
+    if (soundsEnabled) {
+      playSound('complete');
+    }
     completeToday();
-  }, [completeToday, hapticsEnabled]);
+  }, [completeToday, hapticsEnabled, soundsEnabled]);
 
   const onGenerateRandom = useCallback(() => {
     const pool = [...TASK_BANK, ...customTasks];

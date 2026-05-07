@@ -14,7 +14,7 @@ import { epochDay, TWELVE_HOURS_MS } from '../utils/date';
 const DEFAULT_STATE: PersistedState = {
   language: 'ru',
   hapticsEnabled: true,
-  soundsEnabled: false,
+  soundsEnabled: true,
   customTasks: [],
   history: [],
   streak: {

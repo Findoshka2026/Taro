@@ -2,6 +2,7 @@ import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
 
+import { playSound } from '../services/sound';
 import { useAppStore } from '../state/store';
 import { colors } from '../theme/colors';
 import { text as typography } from '../theme/typography';
@@ -19,11 +20,15 @@ interface IconButtonProps {
  */
 export const IconButton: React.FC<IconButtonProps> = ({ glyph, label, onPress, style }) => {
   const hapticsEnabled = useAppStore((s) => s.hapticsEnabled);
+  const soundsEnabled = useAppStore((s) => s.soundsEnabled);
   return (
     <Pressable
       onPress={() => {
         if (hapticsEnabled) {
           void Haptics.selectionAsync();
+        }
+        if (soundsEnabled) {
+          playSound('cardTap');
         }
         onPress();
       }}
