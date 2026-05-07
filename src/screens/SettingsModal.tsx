@@ -13,9 +13,11 @@ export const SettingsModal: React.FC = () => {
   const setModal = useAppStore((s) => s.setModal);
   const hapticsEnabled = useAppStore((s) => s.hapticsEnabled);
   const soundsEnabled = useAppStore((s) => s.soundsEnabled);
+  const notificationsEnabled = useAppStore((s) => s.notificationsEnabled);
   const setLanguage = useAppStore((s) => s.setLanguage);
   const setHaptics = useAppStore((s) => s.setHaptics);
   const setSounds = useAppStore((s) => s.setSounds);
+  const setNotifications = useAppStore((s) => s.setNotifications);
 
   const t = tFor(language);
 
@@ -70,6 +72,18 @@ export const SettingsModal: React.FC = () => {
           thumbColor={colors.cream}
         />
       </View>
+      <View style={styles.row}>
+        <Text style={styles.rowLabel}>{t.settings.notifications}</Text>
+        <Switch
+          value={notificationsEnabled}
+          onValueChange={(v) => {
+            void setNotifications(v);
+          }}
+          trackColor={{ false: 'rgba(244,229,194,0.18)', true: colors.gold }}
+          thumbColor={colors.cream}
+        />
+      </View>
+      <Text style={[styles.hint, styles.hintTight]}>{t.settings.notificationsHint}</Text>
 
       <View style={styles.divider} />
 
@@ -89,6 +103,10 @@ const styles = StyleSheet.create({
     ...typography.bodyDim,
     color: colors.mist,
     marginBottom: 12,
+  },
+  hintTight: {
+    marginTop: -4,
+    marginBottom: 4,
   },
   langRow: {
     flexDirection: 'row',

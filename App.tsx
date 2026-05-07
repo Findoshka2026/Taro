@@ -5,12 +5,14 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AchievementToast } from './src/components/AchievementToast';
 import { GradientBg } from './src/components/GradientBg';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { StatsModal } from './src/screens/StatsModal';
 import { StreakModal } from './src/screens/StreakModal';
 import { HistoryModal } from './src/screens/HistoryModal';
 import { AddTaskModal } from './src/screens/AddTaskModal';
+import { AlbumModal } from './src/screens/AlbumModal';
 import { SettingsModal } from './src/screens/SettingsModal';
 import { initSounds, releaseSounds } from './src/services/sound';
 import { useAppStore } from './src/state/store';
@@ -43,7 +45,9 @@ export default function App() {
           <StreakModal />
           <HistoryModal />
           <AddTaskModal />
+          <AlbumModal />
           <SettingsModal />
+          <AchievementToast />
         </GradientBg>
         <StatusBar style="light" />
       </GestureHandlerRootView>

@@ -6,6 +6,7 @@ export interface PersistedState {
   language: 'ru' | 'en';
   hapticsEnabled: boolean;
   soundsEnabled: boolean;
+  notificationsEnabled: boolean;
   customTasks: import('../data/taskBank').TaskTemplate[];
   history: HistoryEntry[];
   streak: {
@@ -14,6 +15,13 @@ export interface PersistedState {
     lastCompletedEpochDay: number | null;
   };
   today: TodayState | null;
+  /**
+   * Number of times each card art has been completed. Used by the
+   * Album / collection screen and by achievement predicates.
+   */
+  cardCollection: Partial<Record<import('../data/taskBank').CardArtId, number>>;
+  /** IDs of achievements that have been unlocked at least once. */
+  unlockedAchievements: string[];
 }
 
 export interface HistoryEntry {
@@ -45,6 +53,11 @@ export interface TodayState {
     category: import('../i18n/types').TaskCategory;
     cardArtId: import('../data/taskBank').CardArtId;
   } | null;
+  /**
+   * Identifier of the locally scheduled “don’t forget your card”
+   * notification, so we can cancel it when the task is completed.
+   */
+  scheduledNotificationId: string | null;
 }
 
 export const loadPersisted = async (): Promise<Partial<PersistedState>> => {

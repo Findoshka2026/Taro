@@ -70,6 +70,22 @@ export interface Translations {
     aiHint: string;
     sounds: string;
     haptics: string;
+    notifications: string;
+    notificationsHint: string;
+  };
+  album: {
+    title: string;
+    subtitle: string;
+    progress: (collected: number, total: number) => string;
+    locked: string;
+    timesCompleted: (n: number) => string;
+  };
+  achievements: {
+    title: string;
+    subtitle: string;
+    locked: string;
+    unlockedToast: string;
+    progress: (collected: number, total: number) => string;
   };
   category: Record<TaskCategory, string>;
   timer: {

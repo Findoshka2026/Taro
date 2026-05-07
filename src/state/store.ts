@@ -1,7 +1,12 @@
 import { create } from 'zustand';
 
+import { findNewlyUnlocked } from '../data/achievements';
 import { drawThreeForDay, TASK_BANK, TaskTemplate } from '../data/taskBank';
 import type { Language } from '../i18n/types';
+import {
+  cancelScheduledReminder,
+  scheduleTaskReminder,
+} from '../services/notifications';
 import {
   HistoryEntry,
   loadPersisted,
@@ -15,6 +20,7 @@ const DEFAULT_STATE: PersistedState = {
   language: 'ru',
   hapticsEnabled: true,
   soundsEnabled: true,
+  notificationsEnabled: true,
   customTasks: [],
   history: [],
   streak: {
@@ -23,6 +29,8 @@ const DEFAULT_STATE: PersistedState = {
     lastCompletedEpochDay: null,
   },
   today: null,
+  cardCollection: {},
+  unlockedAchievements: [],
 };
 
 interface UiState {
@@ -41,9 +49,12 @@ interface UiState {
     | 'history'
     | 'add'
     | 'settings'
-    | 'generate';
+    | 'generate'
+    | 'album';
   isGenerating: boolean;
   errorMessage: string | null;
+  /** Achievement ID waiting to be shown as a toast (null = nothing). */
+  achievementToast: string | null;
 }
 
 interface Actions {
@@ -51,6 +62,8 @@ interface Actions {
   setLanguage: (lang: Language) => void;
   setHaptics: (enabled: boolean) => void;
   setSounds: (enabled: boolean) => void;
+  setNotifications: (enabled: boolean) => Promise<void>;
+  dismissAchievementToast: () => void;
   /** Initialise today's three cards if a new day has begun. */
   rollDailyDraw: () => void;
   /** User taps one of the three cards. */
@@ -77,10 +90,13 @@ const persistKeys: (keyof PersistedState)[] = [
   'language',
   'hapticsEnabled',
   'soundsEnabled',
+  'notificationsEnabled',
   'customTasks',
   'history',
   'streak',
   'today',
+  'cardCollection',
+  'unlockedAchievements',
 ];
 
 const persist = (state: AppState): void => {
@@ -110,6 +126,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       streak: { ...DEFAULT_STATE.streak, ...(stored.streak ?? {}) },
       customTasks: stored.customTasks ?? [],
       history: stored.history ?? [],
+      cardCollection: stored.cardCollection ?? {},
+      unlockedAchievements: stored.unlockedAchievements ?? [],
     };
     set({
       ...merged,
@@ -131,6 +149,21 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ soundsEnabled: enabled });
     persist(get());
   },
+  setNotifications: async (enabled) => {
+    set({ notificationsEnabled: enabled });
+    persist(get());
+    if (!enabled) {
+      const today = get().today;
+      if (today?.scheduledNotificationId) {
+        await cancelScheduledReminder(today.scheduledNotificationId);
+        set({
+          today: { ...today, scheduledNotificationId: null },
+        });
+        persist(get());
+      }
+    }
+  },
+  dismissAchievementToast: () => set({ achievementToast: null }),
 
   rollDailyDraw: () => {
     const today = epochDay();
@@ -140,6 +173,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({ phase: derivePhase(current) });
       return;
     }
+    // New day — cancel any leftover reminder from yesterday.
+    if (current?.scheduledNotificationId) {
+      void cancelScheduledReminder(current.scheduledNotificationId);
+    }
     const drawn = drawThreeForDay(today);
     const next: TodayState = {
       epochDay: today,
@@ -148,6 +185,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       startedAt: null,
       completedAt: null,
       override: null,
+      scheduledNotificationId: null,
     };
     set({ today: next, phase: 'idle' });
     persist(get());
@@ -155,6 +193,10 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   redrawDay: () => {
     const today = epochDay();
+    const current = get().today;
+    if (current?.scheduledNotificationId) {
+      void cancelScheduledReminder(current.scheduledNotificationId);
+    }
     const drawn = drawThreeForDay(today, Date.now());
     const next: TodayState = {
       epochDay: today,
@@ -163,6 +205,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       startedAt: null,
       completedAt: null,
       override: null,
+      scheduledNotificationId: null,
     };
     set({ today: next, phase: 'idle' });
     persist(get());
@@ -172,13 +215,36 @@ export const useAppStore = create<AppState>((set, get) => ({
     const today = get().today;
     if (!today) return;
     if (today.selectedIndex !== null) return;
+    const startedAt = new Date();
     const updated: TodayState = {
       ...today,
       selectedIndex: index,
-      startedAt: new Date().toISOString(),
+      startedAt: startedAt.toISOString(),
     };
     set({ today: updated, phase: 'burning' });
     persist(get());
+    // Fire-and-forget: schedule the reminder one hour before the timer
+    // runs out, then patch the today state with the resulting id.
+    if (get().notificationsEnabled) {
+      void scheduleTaskReminder(
+        startedAt,
+        {
+          ru: 'Загляни в карту дня — задача почти растает.',
+          en: 'Look at your card — the task is about to fade.',
+        },
+        get().language,
+      ).then((id) => {
+        if (!id) return;
+        const t = get().today;
+        if (!t || t.epochDay !== updated.epochDay || t.completedAt) {
+          // Day already finished or rolled over before scheduling resolved.
+          void cancelScheduledReminder(id);
+          return;
+        }
+        set({ today: { ...t, scheduledNotificationId: id } });
+        persist(get());
+      });
+    }
   },
 
   finishReveal: () => {
@@ -230,11 +296,40 @@ export const useAppStore = create<AppState>((set, get) => ({
         : 1;
     const nextBest = Math.max(state.streak.best, nextCurrent);
 
+    if (today.scheduledNotificationId) {
+      void cancelScheduledReminder(today.scheduledNotificationId);
+    }
+
+    const cardCollection = {
+      ...state.cardCollection,
+      [entry.cardArtId]: (state.cardCollection[entry.cardArtId] ?? 0) + 1,
+    } as PersistedState['cardCollection'];
+
+    const nextHistory = [entry, ...state.history].slice(0, 365);
+    const nextStreak = {
+      current: nextCurrent,
+      best: nextBest,
+      lastCompletedEpochDay: todayN,
+    };
+    const newlyUnlocked = findNewlyUnlocked(state.unlockedAchievements, {
+      history: nextHistory,
+      streak: nextStreak,
+      cardCollection,
+    });
+    const unlocked = [...state.unlockedAchievements, ...newlyUnlocked];
+
     set({
-      today: { ...today, completedAt: entry.completedAt },
+      today: {
+        ...today,
+        completedAt: entry.completedAt,
+        scheduledNotificationId: null,
+      },
       phase: 'completed',
-      history: [entry, ...state.history].slice(0, 365),
-      streak: { current: nextCurrent, best: nextBest, lastCompletedEpochDay: todayN },
+      history: nextHistory,
+      streak: nextStreak,
+      cardCollection,
+      unlockedAchievements: unlocked,
+      achievementToast: newlyUnlocked[0] ?? null,
     });
     persist(get());
   },
@@ -260,6 +355,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setModal: (modal) => set({ modal }),
   setGenerating: (v) => set({ isGenerating: v }),
   setError: (msg) => set({ errorMessage: msg }),
+  achievementToast: null,
 }));
 
 const derivePhase = (today: TodayState | null): UiState['phase'] => {

@@ -196,7 +196,13 @@ export const HomeScreen: React.FC = () => {
       <Header t={t} onSettings={() => setModal('settings')} />
 
       {phase === 'completed' ? (
-        <CompletedView t={t} onOpenStats={() => setModal('stats')} onOpenStreak={() => setModal('streak')} onOpenHistory={() => setModal('history')} />
+        <CompletedView
+          t={t}
+          onOpenStats={() => setModal('stats')}
+          onOpenStreak={() => setModal('streak')}
+          onOpenHistory={() => setModal('history')}
+          onOpenAlbum={() => setModal('album')}
+        />
       ) : phase === 'active' && activeTask ? (
         <ActiveView
           t={t}
@@ -208,6 +214,7 @@ export const HomeScreen: React.FC = () => {
           startedAt={today?.startedAt ?? null}
           onComplete={onComplete}
           onOpenStats={() => setModal('stats')}
+          onOpenAlbum={() => setModal('album')}
         />
       ) : (
         <IdleOrBurningView
@@ -224,6 +231,7 @@ export const HomeScreen: React.FC = () => {
           onOpenStats={() => setModal('stats')}
           onOpenStreak={() => setModal('streak')}
           onOpenHistory={() => setModal('history')}
+          onOpenAlbum={() => setModal('album')}
           isGenerating={isGenerating}
           errorMessage={errorMessage}
         />
@@ -260,6 +268,7 @@ interface IdleViewProps {
   onOpenStats: () => void;
   onOpenStreak: () => void;
   onOpenHistory: () => void;
+  onOpenAlbum: () => void;
   isGenerating: boolean;
   errorMessage: string | null;
 }
@@ -278,6 +287,7 @@ const IdleOrBurningView: React.FC<IdleViewProps> = ({
   onOpenStats,
   onOpenStreak,
   onOpenHistory,
+  onOpenAlbum,
   isGenerating,
   errorMessage,
 }) => {
@@ -340,6 +350,7 @@ const IdleOrBurningView: React.FC<IdleViewProps> = ({
         <IconButton glyph="◇" label={t.stats.title} onPress={onOpenStats} />
         <IconButton glyph="🜂" label={t.streak.title} onPress={onOpenStreak} />
         <IconButton glyph="❦" label={t.history.title.split(' ')[0]} onPress={onOpenHistory} />
+        <IconButton glyph="❖" label={t.album.title.split(' ')[0]} onPress={onOpenAlbum} />
       </View>
     </View>
   );
@@ -355,6 +366,7 @@ interface ActiveViewProps {
   startedAt: string | null;
   onComplete: () => void;
   onOpenStats: () => void;
+  onOpenAlbum: () => void;
 }
 
 const ActiveView: React.FC<ActiveViewProps> = ({
@@ -367,6 +379,7 @@ const ActiveView: React.FC<ActiveViewProps> = ({
   startedAt,
   onComplete,
   onOpenStats,
+  onOpenAlbum,
 }) => (
   <View style={styles.body}>
     <Text style={styles.heroTitle}>{t.app.todayTask}</Text>
@@ -407,7 +420,10 @@ const ActiveView: React.FC<ActiveViewProps> = ({
     <View style={{ height: 22 }} />
     <PrimaryButton label={t.buttons.complete} onPress={onComplete} fullWidth />
     <View style={{ height: 12 }} />
-    <IconButton glyph="◇" label={t.stats.title} onPress={onOpenStats} />
+    <View style={styles.metricsRow}>
+      <IconButton glyph="◇" label={t.stats.title} onPress={onOpenStats} />
+      <IconButton glyph="❖" label={t.album.title.split(' ')[0]} onPress={onOpenAlbum} />
+    </View>
   </View>
 );
 
@@ -416,7 +432,8 @@ const CompletedView: React.FC<{
   onOpenStats: () => void;
   onOpenStreak: () => void;
   onOpenHistory: () => void;
-}> = ({ t, onOpenStats, onOpenStreak, onOpenHistory }) => (
+  onOpenAlbum: () => void;
+}> = ({ t, onOpenStats, onOpenStreak, onOpenHistory, onOpenAlbum }) => (
   <View style={[styles.body, { alignItems: 'center' }]}>
     <Text style={styles.heroTitle}>{t.cards.completed}</Text>
     <Text style={styles.heroHint}>{t.cards.deckTitle}</Text>
@@ -427,6 +444,7 @@ const CompletedView: React.FC<{
       <IconButton glyph="◇" label={t.stats.title} onPress={onOpenStats} />
       <IconButton glyph="🜂" label={t.streak.title} onPress={onOpenStreak} />
       <IconButton glyph="❦" label={t.history.title.split(' ')[0]} onPress={onOpenHistory} />
+      <IconButton glyph="❖" label={t.album.title.split(' ')[0]} onPress={onOpenAlbum} />
     </View>
   </View>
 );
