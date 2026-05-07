@@ -1,0 +1,7 @@
+name = "taro-proxy"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# GROQ_API_KEY and APP_SHARED_SECRET are set via:
+#   npx wrangler secret put GROQ_API_KEY
+#   npx wrangler secret put APP_SHARED_SECRET
