@@ -13,9 +13,20 @@ const ALLOWED_MODELS = new Set([
   "llama-3.1-8b-instant",
 ]);
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, X-App-Token",
+  "Access-Control-Max-Age": "86400",
+};
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: CORS_HEADERS });
+    }
 
     if (url.pathname === "/healthz") {
       return jsonResponse({ status: "ok" });
@@ -63,17 +74,26 @@ export default {
       const text = await upstream.text();
       return new Response(text, {
         status: upstream.status,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...CORS_HEADERS,
+        },
       });
     }
 
-    return new Response("Not Found", { status: 404 });
+    return new Response("Not Found", {
+      status: 404,
+      headers: CORS_HEADERS,
+    });
   },
 };
 
 function jsonResponse(payload, status = 200) {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...CORS_HEADERS,
+    },
   });
 }
